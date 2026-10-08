@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Portal | Secure</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root { --primary: #4f46e5; --glass: rgba(255, 255, 255, 0.95); }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; }
+        body { background: linear-gradient(135deg, #1e1b4b, #312e81, #4338ca); min-height: 100vh; display: flex; align-items: center; justify-content: center; color: #0f172a; position: relative; }
+
+        .container { width: 90%; max-width: 1200px; margin: auto; }
+        
+        /* Login Card */
+        .auth-card { background: var(--glass); padding: 3rem; border-radius: 20px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        .input-group { position: relative; margin-bottom: 15px; }
+        .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--primary); }
+        input { width: 100%; padding: 12px 12px 12px 45px; border: 2px solid #e2e8f0; border-radius: 10px; outline: none; background: #f1f5f9; }
+        input:focus { border-color: var(--primary); background: white; }
+        
+        .btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        .btn:hover { background: #4338ca; }
+        .forgot-link { display: block; margin-top: 15px; color: #64748b; font-size: 0.9rem; text-decoration: none; cursor: pointer; }
+        
+        /* Dashboard & Other UI */
+        #dashboard { display: none; width: 100%; padding: 20px 0; }
+        .nav-header { background: var(--glass); padding: 15px 30px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 10px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+        .msg-card { background: var(--glass); padding: 20px; border-radius: 15px; border-left: 5px solid var(--primary); }
+        
+        .reply-btn { margin-top: 15px; background: #ecfdf5; color: #059669; border: 1px solid #059669; padding: 8px 15px; border-radius: 5px; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .reply-btn:hover { background: #059669; color: white; }
+
+        /* Modals */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; position: relative; }
+        .step { display: none; } .step.active { display: block; }
+
+        /* --- NEW HOME BUTTON STYLES --- */
+        .back-home-link {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            text-decoration: none;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 30px;
+            transition: 0.3s;
+        }
+        .back-home-link:hover {
+            background: white;
+            color: var(--primary);
+        }
+        
+        /* Dashboard Header Buttons */
+        .header-actions { display: flex; gap: 10px; }
+    </style>
+</head>
+<body>
+
+    <a href="/" class="back-home-link" id="home-link">
+        <i class="fas fa-arrow-left"></i> Back to Home
+    </a>
+
+    <div id="login-view" class="auth-card">
+        <h2 style="color: var(--primary); margin-bottom: 20px;">Admin Portal</h2>
+        <div class="input-group"><i class="fas fa-user"></i><input type="text" id="login-id" placeholder="Username or Email"></div>
+        <div class="input-group"><i class="fas fa-lock"></i><input type="password" id="login-pass" placeholder="Password"></div>
+        <button onclick="handleLogin()" id="login-btn" class="btn">Secure Login</button>
+        <p id="login-msg" style="margin-top: 10px; color: red; font-size: 0.9rem;"></p>
+        <span class="forgot-link" onclick="openResetModal()">Forgot Password?</span>
+    </div>
+
+    <div id="dashboard" class="container">
+        <div class="nav-header">
+            <div>
+                <h3 id="display-name" style="color: var(--primary);">Admin</h3>
+                <span id="display-email" style="font-size: 0.85rem; color: #64748b;">admin@example.com</span>
+            </div>
+            
+            <div class="header-actions">
+                <button class="btn" style="width: auto; background: #6366f1;" onclick="window.location.href='/'">
+                    <i class="fas fa-home"></i> Website
+                </button>
+                
+                <button class="btn" style="width: auto; background: #ef4444;" onclick="location.reload()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
+        <div id="content-area" class="grid"></div>
+    </div>
+
+    <div id="reply-modal" class="modal">
+        <div class="modal-content">
+            <i class="fas fa-times" style="position:absolute; right:20px; top:20px; cursor:pointer;" onclick="closeReplyModal()"></i>
+            <h3 style="margin-bottom: 15px; color: var(--primary);">Reply to User</h3>
+            <input type="text" id="reply-to" readonly style="background: #e2e8f0; color: #666;">
+            <input type="text" id="reply-subject" value="Re: Your Portfolio Inquiry">
+            <textarea id="reply-msg" rows="5" placeholder="Type message..." style="width:100%; padding:10px; border-radius:10px; border:2px solid #e2e8f0;"></textarea>
+            <button class="btn" onclick="sendReply()" id="send-reply-btn">Send Email <i class="fas fa-paper-plane"></i></button>
+            <p id="reply-status" style="margin-top: 10px; font-size: 0.9rem;"></p>
+        </div>
+    </div>
+
+    <div id="reset-modal" class="modal">
+        <div class="modal-content">
+            <i class="fas fa-times" style="position:absolute; right:20px; top:20px; cursor:pointer;" onclick="closeResetModal()"></i>
+            
+            <div id="step-1" class="step active">
+                <h3>Reset Password</h3>
+                <input type="email" id="reset-email" placeholder="Email Address" style="margin:15px 0 10px 0;">
+                <button class="btn" onclick="sendOTP()" id="otp-btn">Send OTP</button>
+            </div>
+
+            <div id="step-2" class="step">
+                <h3>Verify OTP</h3>
+                <input type="text" id="otp-input" placeholder="6-digit OTP" style="margin:15px 0 10px 0;">
+                <input type="password" id="new-reset-pass" placeholder="New Password" style="margin-bottom:10px;">
+                <button class="btn" onclick="resetPassword()" id="reset-btn">Change Password</button>
+            </div>
+            <p id="reset-msg" style="margin-top:10px; font-size:0.9rem;"></p>
+        </div>
+    </div>
+
+    <script>
+        // --- LOGIN LOGIC ---
+        async function handleLogin() {
+            const loginId = document.getElementById('login-id').value;
+            const pass = document.getElementById('login-pass').value;
+            const btn = document.getElementById('login-btn');
+            
+            if(!loginId || !pass) return;
+            btn.innerText = "Checking...";
+
+            try {
+                const res = await fetch('/api/admin-login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ loginId, password: pass })
+                });
+                const data = await res.json();
+                if(res.ok) {
+                    document.getElementById('login-view').style.display = 'none';
+                    // Hide the top-left Home Link when inside dashboard to keep it clean
+                    document.getElementById('home-link').style.display = 'none'; 
+                    document.getElementById('dashboard').style.display = 'block';
+                    
+                    document.getElementById('display-name').innerText = data.user.username;
+                    document.getElementById('display-email').innerText = data.user.email;
+                    renderMessages(data.data);
+                } else {
+                    document.getElementById('login-msg').innerText = data.error;
+                    btn.innerText = "Secure Login";
+                }
+            } catch (e) { btn.innerText = "Secure Login"; }
+        }
+
+        // --- RENDER MESSAGES ---
+        function renderMessages(msgs) {
+            const grid = document.getElementById('content-area');
+            grid.innerHTML = '';
+            msgs.forEach(m => {
+                const date = new Date(m.date).toLocaleDateString();
+                grid.innerHTML += `
+                    <div class="msg-card">
+                        <p><strong>${m.name}</strong> <span style="font-size:0.8rem; color:#666;">(${date})</span></p>
+                        <p style="color:var(--primary); font-size:0.9rem;">${m.email}</p>
+                        <div style="background:#f1f5f9; padding:10px; border-radius:5px; margin:10px 0;">${m.message}</div>
+                        <button class="reply-btn" onclick="openReplyModal('${m.email}')"><i class="fas fa-reply"></i> Reply</button>
+                    </div>
+                `;
+            });
+        }
+
+        // --- REPLY ---
+        function openReplyModal(email) {
+            document.getElementById('reply-modal').style.display = 'flex';
+            document.getElementById('reply-to').value = email;
+            document.getElementById('reply-msg').value = '';
+            document.getElementById('reply-status').innerText = '';
+        }
+        function closeReplyModal() { document.getElementById('reply-modal').style.display = 'none'; }
+
+        async function sendReply() {
+            const toEmail = document.getElementById('reply-to').value;
+            const subject = document.getElementById('reply-subject').value;
+            const msg = document.getElementById('reply-msg').value;
+            const btn = document.getElementById('send-reply-btn');
+            const status = document.getElementById('reply-status');
+
+            if(!msg) { status.innerText = "Write a message first."; return; }
+            btn.innerText = "Sending...";
+            
+            try {
+                const res = await fetch('/api/reply-message', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ toEmail, subject, replyMessage: msg })
+                });
+                const data = await res.json();
+                if(res.ok) {
+                    status.innerText = "✅ Reply Sent!"; status.style.color = "green";
+                    setTimeout(closeReplyModal, 2000);
+                } else { status.innerText = "❌ Error"; status.style.color = "red"; }
+            } catch (e) { status.innerText = "Error"; }
+            btn.innerHTML = 'Send Email <i class="fas fa-paper-plane"></i>';
+        }
+
+        // --- FORGOT PASSWORD ---
+        function openResetModal() { document.getElementById('reset-modal').style.display = 'flex'; document.getElementById('step-1').style.display = 'block'; document.getElementById('step-2').style.display = 'none'; document.getElementById('reset-msg').innerText = ''; }
+        function closeResetModal() { document.getElementById('reset-modal').style.display = 'none'; }
+
+        async function sendOTP() {
+            const email = document.getElementById('reset-email').value;
+            if(!email) return;
+            document.getElementById('otp-btn').innerText = "Sending...";
+            const res = await fetch('/api/forgot-password', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ email }) });
+            if(res.ok) {
+                document.getElementById('step-1').style.display = 'none';
+                document.getElementById('step-2').style.display = 'block';
+                alert("OTP Sent! Check Terminal.");
+            } else { document.getElementById('reset-msg').innerText = "Email not found"; }
+            document.getElementById('otp-btn').innerText = "Send OTP";
+        }
+
+        async function resetPassword() {
+            const email = document.getElementById('reset-email').value;
+            const otp = document.getElementById('otp-input').value;
+            const newPass = document.getElementById('new-reset-pass').value;
+            const res = await fetch('/api/reset-password', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ email, otp, newPassword: newPass }) });
+            if(res.ok) {
+                document.getElementById('reset-msg').innerText = "Success! Login now.";
+                document.getElementById('reset-msg').style.color = "green";
+                setTimeout(closeResetModal, 2000);
+            } else { document.getElementById('reset-msg').innerText = "Invalid OTP"; document.getElementById('reset-msg').style.color = "red"; }
+        }
+    </script>
+</body>
+</html>
